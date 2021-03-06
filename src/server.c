@@ -80,38 +80,52 @@ struct redisServer server; /* Server global state */
  * Every entry is composed of the following fields:
  *
  * name:        A string representing the command name.
+ * 客户端执行指令的字符串
  *
  * function:    Pointer to the C function implementing the command.
+ * 客户端指令字符串对应的函数，包含了此指令对应的逻辑处理
  *
  * arity:       Number of arguments, it is possible to use -N to say >= N
+ * 参数个数
  *
  * sflags:      Command flags as string. See below for a table of flags.
+ * 字符串flag
  *
  * flags:       Flags as bitmask. Computed by Redis using the 'sflags' field.
+ * 字节掩码
  *
  * get_keys_proc: An optional function to get key arguments from a command.
  *                This is only used when the following three fields are not
  *                enough to specify what arguments are keys.
+ *一个从指令中获取多个key-value 的可选函数，仅有指令中带了三个field而需要去指定哪些参数是key的情况会用到
  *
  * first_key_index: First argument that is a key
+ * 第一个key的索引
  *
  * last_key_index: Last argument that is a key
+ *最后一个key的索引
  *
  * key_step:    Step to get all the keys from first to last argument.
  *              For instance in MSET the step is two since arguments
  *              are key,val,key,val,...
+ *获取所有key需要的步骤数
  *
  * microseconds: Microseconds of total execution time for this command.
+ * 记录当前指令总执行时间，单位为微秒
  *
  * calls:       Total number of calls of this command.
+ * 当前指令的总调用次数
  *
  * id:          Command bit identifier for ACLs or other goals.
+ * ACL或其他目标的命令位标识符。
  *
  * The flags, microseconds and calls fields are computed by Redis and should
  * always be set to zero.
+ * 需要redis去计算，所以初始值都是0
  *
  * Command flags are expressed using space separated strings, that are turned
  * into actual flags by the populateCommandTable() function.
+ * sflags中字符串指令用空格隔开，会被populateCommandTable()转化为真实的标志位
  *
  * This is the meaning of the flags:
  *
@@ -160,9 +174,12 @@ struct redisServer server; /* Server global state */
  *              delay its execution as long as the kernel scheduler is giving
  *              us time. Note that commands that may trigger a DEL as a side
  *              effect (like SET) are not fast commands.
+ *              只要内核调度给出时间，那复杂度为O(1) 或者 O(log(N)) 的命令应该永远不会延迟执行，因此很快
+ *              特别注意，那些可能触发删除DEL的指令不是很快执行的指令
  *
  * The following additional flags are only used in order to put commands
  * in a specific ACL category. Commands can have multiple ACL categories.
+ * 访问控制列表
  *
  * @keyspace, @read, @write, @set, @sortedset, @list, @hash, @string, @bitmap,
  * @hyperloglog, @stream, @admin, @fast, @slow, @pubsub, @blocking, @dangerous,
@@ -649,6 +666,10 @@ struct redisCommand redisCommandTable[] = {
     {"ping",pingCommand,-1,
      "ok-stale fast @connection",
      0,NULL,0,0,0,0,0,0},
+
+    {"scs",scsCommand,-1,
+            "ok-stale fast @connection",
+            0,NULL,0,0,0,0,0,0},
 
     {"echo",echoCommand,2,
      "read-only fast @connection",
@@ -2874,7 +2895,7 @@ void initServer(void) {
         serverLog(LL_WARNING, "Failed to configure TLS. Check logs for more info.");
         exit(1);
     }
-
+    //创建共享对象，例如常用的交互的常量[OK ERR +PONG]
     createSharedObjects();
     adjustOpenFilesLimit();
     server.el = aeCreateEventLoop(server.maxclients+CONFIG_FDSET_INCR);
@@ -3970,6 +3991,29 @@ void pingCommand(client *c) {
         else
             addReplyBulk(c,c->argv[1]);
     }
+}
+
+void scsCommand(client *c) {
+    /* The command takes zero or one arguments. */
+    if (c->argc > 2) {
+        addReplyErrorFormat(c,"wrong number of arguments for '%s' command",
+                            c->cmd->name);
+        return;
+    }
+
+/*    if (c->flags & CLIENT_PUBSUB && c->resp == 2) {
+        addReply(c,shared.mbulkhdr[2]);
+        addReplyBulkCBuffer(c,"pong",4);
+        if (c->argc == 1)
+            addReplyBulkCBuffer(c,"",0);
+        else
+            addReplyBulk(c,c->argv[1]);
+    } else {
+        if (c->argc == 1)*/
+    addReplyBulkCBuffer(c,"scs is great",12);
+/*        else
+            addReplyBulk(c,c->argv[1]);
+    }*/
 }
 
 void echoCommand(client *c) {
@@ -5417,7 +5461,7 @@ int main(int argc, char **argv) {
     int background = server.daemonize && !server.supervised;
     if (background) daemonize();
 
-    serverLog(LL_WARNING, "oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo");
+    serverLog(LL_WARNING, "oO0OoO0OoO0Oo my even better Redis is starting oO0OoO0OoO0Oo");
     serverLog(LL_WARNING,
         "Redis version=%s, bits=%d, commit=%s, modified=%d, pid=%d, just started",
             REDIS_VERSION,
@@ -5495,6 +5539,7 @@ int main(int argc, char **argv) {
     redisSetCpuAffinity(server.server_cpulist);
     setOOMScoreAdj(-1);
 
+    //  轮循loop监听客户端发送过来的事件
     aeMain(server.el);
     aeDeleteEventLoop(server.el);
     return 0;

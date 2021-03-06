@@ -333,35 +333,21 @@ This is the entry point of the Redis server, where the `main()` function
 is defined. The following are the most important steps in order to startup
 the Redis server.
 
-1. `initServerConfig()` sets up the default values of the `server` structure. 
-* 初始化服务端配置信息，设置服务器启动的默认值
-
-2. `initServer()` allocates the data structures needed to operate, setup the listening socket, and so forth.
-* 初始化服务器
-
-
-3. `aeMain()` starts the event loop which listens for new connections.
-
-* 开启监听新连接的事件循环
+* `initServerConfig()` sets up the default values of the `server` structure.
+* `initServer()` allocates the data structures needed to operate, setup the listening socket, and so forth.
+* `aeMain()` starts the event loop which listens for new connections.
 
 There are two special functions called periodically by the event loop:
 
-有两个特别的函数会被时间循环周期性地调用
-
 1. `serverCron()` is called periodically (according to `server.hz` frequency), and performs tasks that must be performed from time to time, like checking for timed out clients.
-* 周期性根据server.hz的频率周期性调用  ，而且执行那些必须一直执行的任务，例如检查客户端超时   
-
 2. `beforeSleep()` is called every time the event loop fired, Redis served a few requests, and is returning back into the event loop.
-* 每次循环触发都会调用“beforeSleep()”,Redis处理了一些请求，并返回到事件循环
 
 Inside server.c you can find code that handles other vital things of the Redis server:
-* 其他处理其他事情的重要函数如下
 
-* `call()` is used in order to call a given command in the context of a given client.调用客户端的指令
-* `activeExpireCycle()` handles eviction of keys with a time to live set via the `EXPIRE` command.处理设置了ttl的key
-* `freeMemoryIfNeeded()` is called when a new write command should be performed but Redis is out of memory according to the `maxmemory` directive. 清理内存
-* The global variable `redisCommandTable` defines all the Redis commands, specifying the name of the command, the function implementing the command, the number of arguments required, and other properties of each command.redis全局指令集
-
+* `call()` is used in order to call a given command in the context of a given client.
+* `activeExpireCycle()` handles eviciton of keys with a time to live set via the `EXPIRE` command.
+* `freeMemoryIfNeeded()` is called when a new write command should be performed but Redis is out of memory according to the `maxmemory` directive.
+* The global variable `redisCommandTable` defines all the Redis commands, specifying the name of the command, the function implementing the command, the number of arguments required, and other properties of each command.
 
 networking.c
 ---
@@ -369,17 +355,11 @@ networking.c
 This file defines all the I/O functions with clients, masters and replicas
 (which in Redis are just special clients):
 
-1. 初始化客户端
 * `createClient()` allocates and initializes a new client.
-2. 命令实现使用一系列功能，以便将指定命令执行出的结果数据追加(buffer)到客户端返回结构中
 * the `addReply*()` family of functions are used by command implementations in order to append data to the client structure, that will be transmitted to the client as a reply for a given command executed.
-3. 将输出缓冲区中待处理的数据传输到客户端，并由* writable事件处理程序*`sendReplyToClient（）`调用。
 * `writeToClient()` transmits the data pending in the output buffers to the client and is called by the *writable event handler* `sendReplyToClient()`.
-4. 通过可读事件处理器从客户端读取并积累到查询缓冲区
 * `readQueryFromClient()` is the *readable event handler* and accumulates data read from the client into the query buffer.
-5. 是用于根据Redis协议解析客户端查询缓冲区的入口点。 一旦准备好处理命令，它将调用在server.c内部定义的processCommand（）以便实际执行命令。
 * `processInputBuffer()` is the entry point in order to parse the client query buffer according to the Redis protocol. Once commands are ready to be processed, it calls `processCommand()` which is defined inside `server.c` in order to actually execute the command.
-6. 取消内存分配，断开连接和删除客户端。
 * `freeClient()` deallocates, disconnects and removes a client.
 
 aof.c and rdb.c
