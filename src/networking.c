@@ -1909,6 +1909,7 @@ int processCommandAndResetClient(client *c) {
  * pending query buffer, already representing a full command, to process. */
 void processInputBuffer(client *c) {
     /* Keep processing while there is something in the input buffer */
+    //当我们最近从querybuf中读取的位置 小于querybuf的总长度，说明没有读完,就循环读取buffer中数据
     while(c->qb_pos < sdslen(c->querybuf)) {
         /* Return if clients are paused. */
         if (!(c->flags & CLIENT_SLAVE) && clientsArePaused()) break;

@@ -209,7 +209,10 @@ struct redisCommand redisCommandTable[] = {
      0,NULL,1,1,1,0,0,0},
 
     /* Note that we can't flag set as fast, since it may perform an
-     * implicit DEL of a large key. */
+     * implicit DEL of a large key.
+     * 因为set有可能将值设置为NULL,相当于隐式删除指令，
+     * 当遇到一个很大的key的时候会很耗时，因此不能设置为fast
+     * */
     {"set",setCommand,-3,
      "write use-memory @string",
      0,NULL,1,1,1,0,0,0},
