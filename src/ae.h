@@ -98,15 +98,46 @@ typedef struct aeFiredEvent {
 
 /* State of an event based program */
 typedef struct aeEventLoop {
-    int maxfd;   /* highest file descriptor currently registered */
-    int setsize; /* max number of file descriptors tracked */
+    /*
+     * highest file descriptor currently registered
+     * 内核会保证新建连接的fd是当前可用描述符的最小值 ，因此最大的文件描述符是当前最早建立的连接，紧接着会处理
+     *
+     * */
+    int maxfd;
+    /*
+     * max number of file descriptors tracked
+     * 指定事件循环要监听的文件描述符集合的大小。这个值与配置文件中得maxclients有关
+     * */
+    int setsize;
     long long timeEventNextId;
     time_t lastTime;     /* Used to detect system clock skew */
-    aeFileEvent *events; /* Registered events */
-    aeFiredEvent *fired; /* Fired events */
+    /*
+     * Registered events
+     * 存放所有注册的读写事件，是大小为setsize的数组
+     * 内核会保证新建连接的fd是当前可用描述符的最小值，所以最多监听setsize个描述符，那么最大的fd就是setsize - 1
+     * 这种设计的好处是，可以以fd为下标，索引到对应的事件，在事件触发后根据fd快速查找到对应的事件
+     *
+     * */
+    aeFileEvent *events;
+    /*
+     * Fired events
+     * 存放触发过的读写事件，同样是setsize大小的数组
+     *
+     * */
+    aeFiredEvent *fired;
+    /*
+     * redis将定时器事件组织成链表，这个属性指向表头
+     *
+     * */
     aeTimeEvent *timeEventHead;
     int stop;
-    void *apidata; /* This is used for polling API specific data */
+    /* This is used for polling API specific data
+     * 用于轮循api特定数据
+     * 存放epoll,select 等实现相关的数据
+     *
+     * */
+    void *apidata;
+    /*事件循环每一次迭代都会调用beforesleep执行一些异步处理*/
     aeBeforeSleepProc *beforesleep;
     aeBeforeSleepProc *aftersleep;
     int flags;

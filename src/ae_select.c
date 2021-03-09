@@ -39,6 +39,9 @@ typedef struct aeApiState {
     fd_set _rfds, _wfds;
 } aeApiState;
 
+/*
+ * 创建epoll的fd，以及要监听的epoll_event
+ * */
 static int aeApiCreate(aeEventLoop *eventLoop) {
     aeApiState *state = zmalloc(sizeof(aeApiState));
 

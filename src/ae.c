@@ -64,10 +64,16 @@ aeEventLoop *aeCreateEventLoop(int setsize) {
     aeEventLoop *eventLoop;
     int i;
 
+    /*
+     * setsize指定事件循环监听的fd的数量
+     * 而且内核会保证新创建的fd是最小正整数，直接创建setsize大小的数组存放对应的事件
+     *
+     * */
     if ((eventLoop = zmalloc(sizeof(*eventLoop))) == NULL) goto err;
     eventLoop->events = zmalloc(sizeof(aeFileEvent)*setsize);
     eventLoop->fired = zmalloc(sizeof(aeFiredEvent)*setsize);
     if (eventLoop->events == NULL || eventLoop->fired == NULL) goto err;
+    //确认分配存放事件的数组无误后，初始化aeEventLoop
     eventLoop->setsize = setsize;
     eventLoop->lastTime = time(NULL);
     eventLoop->timeEventHead = NULL;
@@ -77,9 +83,12 @@ aeEventLoop *aeCreateEventLoop(int setsize) {
     eventLoop->beforesleep = NULL;
     eventLoop->aftersleep = NULL;
     eventLoop->flags = 0;
+
     if (aeApiCreate(eventLoop) == -1) goto err;
     /* Events with mask == AE_NONE are not set. So let's initialize the
-     * vector with it. */
+     * vector with it.
+     * 初始化 待接收注册事件的数组
+     * */
     for (i = 0; i < setsize; i++)
         eventLoop->events[i].mask = AE_NONE;
     return eventLoop;
@@ -454,6 +463,9 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
             tvp = &tv;
         }
 
+        /*
+         * 调用beforesleep函数，处理异步任务
+         * */
         if (eventLoop->beforesleep != NULL && flags & AE_CALL_BEFORE_SLEEP)
             eventLoop->beforesleep(eventLoop);
 
@@ -461,7 +473,9 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
          * some event fires. */
         numevents = aeApiPoll(eventLoop, tvp);
 
-        /* After sleep callback. */
+        /* After sleep callback.
+         * 调用aftersleep回调函数
+         * */
         if (eventLoop->aftersleep != NULL && flags & AE_CALL_AFTER_SLEEP)
             eventLoop->aftersleep(eventLoop);
 
