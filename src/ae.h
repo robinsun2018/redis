@@ -100,7 +100,7 @@ typedef struct aeFiredEvent {
 typedef struct aeEventLoop {
     /*
      * highest file descriptor currently registered
-     * 内核会保证新建连接的fd是当前可用描述符的最小值 ，因此最大的文件描述符是当前最早建立的连接，紧接着会处理
+     * 当前注册的最大fd，内核会保证新建连接的fd是当前可用描述符的最小值
      *
      * */
     int maxfd;
