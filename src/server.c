@@ -4004,19 +4004,8 @@ void scsCommand(client *c) {
         return;
     }
 
-/*    if (c->flags & CLIENT_PUBSUB && c->resp == 2) {
-        addReply(c,shared.mbulkhdr[2]);
-        addReplyBulkCBuffer(c,"pong",4);
-        if (c->argc == 1)
-            addReplyBulkCBuffer(c,"",0);
-        else
-            addReplyBulk(c,c->argv[1]);
-    } else {
-        if (c->argc == 1)*/
-    addReplyBulkCBuffer(c,"scs is great",12);
-/*        else
-            addReplyBulk(c,c->argv[1]);
-    }*/
+    addReplyBulkCBuffer(c,"ypshengxian is great",20);
+
 }
 
 void echoCommand(client *c) {
