@@ -20,3 +20,7 @@ set_target_properties(testmodule PROPERTIES PREFIX "" SUFFIX ".so")
 
 add_library(robin SHARED robin.c)
 set_target_properties(robin PROPERTIES PREFIX "" SUFFIX ".so")
+
+
+add_library(snowflake SHARED snowflake.c)
+set_target_properties(snowflake PROPERTIES PREFIX "" SUFFIX ".so")
