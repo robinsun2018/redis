@@ -1,11 +1,3 @@
-#[[
-cmake_minimum_required(VERSION 3.17)
-project(redis C)
-
-set(CMAKE_C_STANDARD 99)
-
-add_executable(redis main.c)]]
-
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(redis VERSION 6.0)
 if (NOT CMAKE_BUILD_TYPE)

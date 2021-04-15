@@ -671,8 +671,8 @@ struct redisCommand redisCommandTable[] = {
      0,NULL,0,0,0,0,0,0},
 
     {"scs",scsCommand,-1,
-            "ok-stale fast @connection",
-            0,NULL,0,0,0,0,0,0},
+    "ok-stale fast @connection",
+    0,NULL,0,0,0,0,0,0},
 
     {"echo",echoCommand,2,
      "read-only fast @connection",
@@ -3073,8 +3073,8 @@ void initServer(void) {
  * Thread Local Storage initialization collides with dlopen call.
  * see: https://sourceware.org/bugzilla/show_bug.cgi?id=19329 */
 void InitServerLast() {
-    bioInit();
-    initThreadedIO();
+    bioInit();//初始化后台系统线程，即处理指令的主线程
+    initThreadedIO();//io线程
     set_jemalloc_bg_thread(server.jemalloc_bg_thread);
     server.initial_memory_usage = zmalloc_used_memory();
 }
